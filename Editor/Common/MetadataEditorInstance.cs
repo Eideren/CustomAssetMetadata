@@ -109,9 +109,11 @@ sealed class MetadataEditorInstance : IDisposable
 
         var rect = GUILayoutUtility.GetRect(GUIContent.none, InspectorLayout.InspectorTitlebar);
         showMetadata = InspectorLayout.FoldoutTitlebar(rect, showMetadata, metadataContent, false, InspectorLayout.InspectorTitlebar, InspectorLayout.InspectorTitlebarText);
+        showMetadata = GUI.Toggle(rect, showMetadata, GUIContent.none, EditorStyles.foldout); // No clue why it's not drawn by the above line but who cares
         var controlId = InspectorLayout.LastControlId;
         if (showMetadata)
         {
+            EditorGUI.indentLevel++;
             if (MixedValues)
             {
                 EditorGUI.showMixedValue = true;
@@ -123,6 +125,7 @@ sealed class MetadataEditorInstance : IDisposable
                 ShowMetadataEditor();
                 EditorGUILayout.Space();
             }
+            EditorGUI.indentLevel--;
         }
 
         var evt = Event.current;
