@@ -1,18 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
-using UnityEngine;
+﻿using System.Runtime.CompilerServices;
 
 public static class GetMetadataOfTypeExtensions
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Metadata GetMetadataOfType<Metadata>(this Material asset)
+    public static Metadata? TryGetMetadata<Metadata>(this UnityEngine.Object asset)
         where Metadata : CustomAssetMetadata
     {
-        return MetadataLookup.GetMetadataOfType<Metadata>(asset);
+        return MetadataTable.Instance.TryGet<Metadata>(asset);
     }
-
-
 }

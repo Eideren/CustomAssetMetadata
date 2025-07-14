@@ -119,27 +119,7 @@ public static class AssetMetadataUtility
         if (assetPath == null || string.IsNullOrEmpty(assetPath))
             return;
 
-        if (target is SceneAsset)
-        {
-            // calling LoadAllAssetsAtPath with a scene throws, this doesn't.
-            // Still, right now scenes do not support adding metadata so this cannot be validated further
-            foreach (var allMetadataType in AllMetadataTypes)
-            {
-                var additionalDataAsset = (CustomAssetMetadata)AssetDatabase.LoadAssetAtPath(assetPath, allMetadataType);
-                metadata.Add(additionalDataAsset);
-            }
-        }
-        else
-        {
-            var assets = AssetDatabase.LoadAllAssetsAtPath(assetPath);
-            foreach (var asset in assets)
-            {
-                if (asset is CustomAssetMetadata additionalDataAsset)
-                {
-                    metadata.Add(additionalDataAsset);
-                }
-            }
-        }
+        metadata.AddRange(MetadataTable.Instance.GetAll(target));
     }
 
     public static CustomAssetMetadata Add(UnityEngine.Object target, Type type)
@@ -157,23 +137,7 @@ public static class AssetMetadataUtility
 			return null;
         }
 
-		// TODO: could try to make non unity assets work by putting a file next to it?
-
-		var instance = ScriptableObject.CreateInstance(type);
-        instance.hideFlags = HideFlags.HideInHierarchy;
-        if (instance is CustomAssetMetadata assetMetadata)
-        {
-			assetMetadata.name = type.Name;
-            assetMetadata.reference = target;
-            assetMetadata.OnReset();
-			AssetDatabase.AddObjectToAsset(assetMetadata, assetPath);
-            AssetDatabase.ImportAsset(assetPath);
-            AssetDatabase.Refresh();
-            return assetMetadata;
-        }
-
-        UnityEngine.Object.DestroyImmediate(instance);
-        return null;
+        return MetadataTable.Instance.CreateAndAdd(target, type);
 	}
 
 	public static bool CanAddMetadataType(UnityEngine.Object target, Type type)
@@ -183,7 +147,7 @@ public static class AssetMetadataUtility
 		EnsureInitialized();
         if (disallowMultipleMetadataLookup.Contains(type))
         {
-            if (MetadataLookup.HasMetadataOfType(target, type))
+            if (MetadataTable.Instance.GetAll(target).Any(x => type.IsAssignableFrom(x.GetType())))
                 return false;
         }
         if (!restrictedTypesLookup.TryGetValue(type, out var restrictedTypes))
@@ -217,9 +181,6 @@ public static class AssetMetadataUtility
         if (assetPath == null)
             return;
 
-        AssetDatabase.RemoveObjectFromAsset(metadata);
-        UnityEngine.Object.DestroyImmediate(metadata); // we need to destroy it otherwise it'll be saved to the scene
-        AssetDatabase.ImportAsset(assetPath);
-        AssetDatabase.Refresh();
+        MetadataTable.Instance.Destroy(metadata);
     }
 }
