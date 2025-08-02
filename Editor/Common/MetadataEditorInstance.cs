@@ -104,13 +104,15 @@ sealed class MetadataEditorInstance : IDisposable
         if (targets == null || targets.Length == 0 || metadata == null || metadata.Length == 0)
             return;
 
-        EditorGUI.indentLevel = 0;
+        EditorGUI.indentLevel = 1;
         EditorGUIUtility.labelWidth = 0;
 
         var rect = GUILayoutUtility.GetRect(GUIContent.none, InspectorLayout.InspectorTitlebar);
+        rect = EditorGUI.IndentedRect(rect);
         showMetadata = InspectorLayout.FoldoutTitlebar(rect, showMetadata, metadataContent, false, InspectorLayout.InspectorTitlebar, InspectorLayout.InspectorTitlebarText);
+        HandleRightClickMenu(rect);
         showMetadata = GUI.Toggle(rect, showMetadata, GUIContent.none, EditorStyles.foldout); // No clue why it's not drawn by the above line but who cares
-        var controlId = InspectorLayout.LastControlId;
+        
         if (showMetadata)
         {
             EditorGUI.indentLevel++;
@@ -127,9 +129,12 @@ sealed class MetadataEditorInstance : IDisposable
             }
             EditorGUI.indentLevel--;
         }
+    }
 
+    void HandleRightClickMenu(Rect rect)
+    {
         var evt = Event.current;
-        var type = evt.GetTypeForControl(controlId);
+        var type = evt.GetTypeForControl(InspectorLayout.LastControlId);
         switch (type)
         {
             case EventType.MouseUp:
