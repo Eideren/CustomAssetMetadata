@@ -230,6 +230,11 @@ public sealed class MetadataEditor : IDisposable
             Debug.Log("targets == null");
             return null;
         }
+        if (targets[0] == null)
+        {
+            Debug.Log("targets[0] == null");
+            return null;
+        }
 
         var types               = ListPool<Type>.Get();
         var typeMetadata        = ListPool<List<CustomAssetMetadata>>.Get();
