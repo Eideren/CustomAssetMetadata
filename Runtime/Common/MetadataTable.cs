@@ -42,7 +42,7 @@ public class MetadataTable : ScriptableObject
     }
 
     [SerializeField] private List<Link> _list = new();
-    private Dictionary<int, List<LazyLoadReference<CustomAssetMetadata>>>? _objectToMetada;
+    private Dictionary<EntityId, List<LazyLoadReference<CustomAssetMetadata>>>? _objectToMetada;
 
     public T? TryGet<T>(Object obj) where T : CustomAssetMetadata
     {
@@ -82,21 +82,21 @@ public class MetadataTable : ScriptableObject
         return Enumerable.Empty<CustomAssetMetadata>();
     }
 
-    int GetIdFrom(Object obj)
+    EntityId GetIdFrom(Object obj)
     {
-        #if UNITY_EDITOR
-        return obj.GetInstanceID();
+        #if true//UNITY_EDITOR
+        return obj.GetEntityId();
         #else
         var indexOfId = obj.name.IndexOf(TagStart, StringComparison.Ordinal);
         if (indexOfId != -1)
         {
             ReadOnlySpan<char> span = obj.name.AsSpan()[(indexOfId + TagStart.Length)..];
             Debug.LogError(span.ToString());
-            return int.Parse(span);
+            return EntityId.FromULong(ulong.Parse(span));
         }
         else
         {
-            return 0;
+            return EntityId.None;
         }
         #endif
     }
@@ -108,16 +108,16 @@ public class MetadataTable : ScriptableObject
         public LazyLoadReference<Object> _reference;
 #endif
 
-        public int _associatedId;
+        public EntityId _associatedId;
 
         public LazyLoadReference<CustomAssetMetadata> Metadata;
 
-        public int TargetId
+        public EntityId TargetId
         {
             get
             {
                 #if UNITY_EDITOR
-                return _reference.instanceID;
+                return _reference.entityId;
                 #else
                 return _associatedId;
                 #endif
@@ -138,7 +138,7 @@ public class MetadataTable : ScriptableObject
         UnityEditor.AssetDatabase.Refresh();
         if (_objectToMetada is not null)
         {
-            int id = target.GetInstanceID();
+            EntityId id = target.GetEntityId();
             if (_objectToMetada.TryGetValue(id, out var list) == false)
                 _objectToMetada[id] = list = new();
             list.Add(instance);
@@ -151,13 +151,13 @@ public class MetadataTable : ScriptableObject
     {
         for (var i = _list.Count - 1; i >= 0; i--)
         {
-            if (_list[i].Metadata.instanceID == metadata.GetInstanceID())
+            if (_list[i].Metadata.entityId == metadata.GetEntityId())
             {
                 if (_objectToMetada != null && _objectToMetada.TryGetValue(_list[i].TargetId, out var list))
                 {
                     for (int j = list.Count - 1; j >= 0; j--)
                     {
-                        if (list[j].instanceID == metadata.GetInstanceID())
+                        if (list[j].entityId == metadata.GetEntityId())
                             list.RemoveAt(j);
                     }
                 }
@@ -184,12 +184,13 @@ public class MetadataTable : ScriptableObject
             {
                 var metadata = instance._list[i];
                 var asset = metadata._reference.asset;
-                var id = asset.GetInstanceID();
+                var id = asset.GetEntityId();
 
                 metadata._associatedId = id;
                 instance._list[i] = metadata;
 
-                asset.name += $"{TagStart}{id}";
+                
+                asset.name += $"{TagStart}{EntityId.ToULong(id)}";
                 Debug.Log(asset.name);
 
                 UnityEditor.EditorUtility.SetDirty(asset);
