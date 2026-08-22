@@ -182,20 +182,27 @@ public class MetadataTable : ScriptableObject
 
             for (int i = 0; i < instance._list.Count; i++)
             {
-                var metadata = instance._list[i];
-                var asset = metadata._reference.asset;
-                var id = asset.GetEntityId();
+                try
+                {
+                    var metadata = instance._list[i];
+                    var asset = metadata._reference.asset;
+                    var id = asset.GetEntityId();
 
-                metadata._associatedId = id;
-                instance._list[i] = metadata;
+                    metadata._associatedId = id;
+                    instance._list[i] = metadata;
 
-                
-                asset.name += $"{TagStart}{EntityId.ToULong(id)}";
-                Debug.Log(asset.name);
 
-                UnityEditor.EditorUtility.SetDirty(asset);
-                UnityEditor.AssetDatabase.SaveAssetIfDirty(asset);
-                UnityEditor.EditorUtility.SetDirty(instance);
+                    asset.name += $"{TagStart}{EntityId.ToULong(id)}";
+                    Debug.Log(asset.name);
+
+                    UnityEditor.EditorUtility.SetDirty(asset);
+                    UnityEditor.AssetDatabase.SaveAssetIfDirty(asset);
+                    UnityEditor.EditorUtility.SetDirty(instance);
+                }
+                catch (Exception e)
+                {
+                    Debug.LogException(e);
+                }
             }
             UnityEditor.AssetDatabase.SaveAssetIfDirty(instance);
             UnityEditor.AssetDatabase.Refresh();
@@ -209,10 +216,17 @@ public class MetadataTable : ScriptableObject
 
             foreach (var metadata in instance._list)
             {
-                var asset = metadata._reference.asset;
-                asset.name = asset.name[..asset.name.IndexOf(TagStart, StringComparison.Ordinal)];
-                UnityEditor.EditorUtility.SetDirty(asset);
-                UnityEditor.AssetDatabase.SaveAssetIfDirty(asset);
+                try
+                {
+                    var asset = metadata._reference.asset;
+                    asset.name = asset.name[..asset.name.IndexOf(TagStart, StringComparison.Ordinal)];
+                    UnityEditor.EditorUtility.SetDirty(asset);
+                    UnityEditor.AssetDatabase.SaveAssetIfDirty(asset);
+                }
+                catch (Exception e)
+                {
+                    Debug.LogException(e);
+                }
             }
             UnityEditor.AssetDatabase.Refresh();
         }
